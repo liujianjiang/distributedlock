@@ -1,9 +1,7 @@
 # distributedlock 分布式锁
 
-在业务代码 `xxx-service.go` 中：
-
 ```go
-import "git.woa.com/baicaoyuan/moss/sync/distributedlock"
+import "github.com/liujianjiang/distributedlock"
 
 // Hello is an example method
 func (s *Service) Hello(ctx context.Context, req *pb.HelloReq, rsp *pb.HelloRsp) error {

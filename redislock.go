@@ -3,7 +3,6 @@ package distributedlock
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -80,7 +79,6 @@ func (l *redisLock) SpinLock(ctx context.Context) (success bool, err error) {
 		default:
 		}
 		success, err = l.Lock(ctx)
-		fmt.Printf("err: %v", err)
 		if err != nil {
 
 			time.Sleep(10 * time.Millisecond)
