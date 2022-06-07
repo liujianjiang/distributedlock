@@ -4,7 +4,7 @@
 import "github.com/liujianjiang/distributedlock"
 
 // Hello is an example method
-func (s *Service) Hello(ctx context.Context, req *pb.HelloReq, rsp *pb.HelloRsp) error {
+func main() {
 	lockkey := "my-business-lock-key"
 	l := distributedlock.NewRedisLock(s.rediscli, lockkey)
 	// Lock 已经支持可重入，不用担心 Redis中设置成功而客户端超时的场景下重试后获取不到锁的情况
