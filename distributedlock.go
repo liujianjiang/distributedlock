@@ -15,6 +15,9 @@ type DistributedLock interface {
 	// SpinLock 获取锁，自旋，获取不到就阻塞等待，直到 context 超时
 	SpinLock(ctx context.Context) (success bool, err error)
 
+	// WatchLock 创建守护协程，监听锁自动续期
+	WatchLock(ctx context.Context) error
+
 	// Unlock 释放锁
 	Unlock(ctx context.Context) error
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
@@ -48,4 +49,32 @@ func TestRedisReentrantLock(t *testing.T) {
 	assert.Nil(t, err)
 	err = l.Unlock(context.Background())
 	assert.NotNil(t, err)
+}
+
+func TestRedisSpinLock(t *testing.T) {
+	l := NewRedisLock(rediscli, "test-key-TestRedisSpinLock")
+	success, err := l.SpinLock(context.Background())
+	assert.Nil(t, err)
+	assert.True(t, success)
+	err = l.Unlock(context.Background())
+	assert.NotNil(t, err)
+}
+
+func TestRedisWatchLock(t *testing.T) {
+	l := NewRedisLock(rediscli, "test-key-TestRedisWatchLock", WithTTL(time.Millisecond*10000))
+	success, err := l.Lock(context.Background())
+	assert.Nil(t, err)
+	assert.True(t, success)
+
+	ctx, cancelFun := context.WithCancel(context.Background())
+	//开启协程监听锁并自动续约
+	go l.WatchLock(ctx)
+	//处理业务
+	if success {
+		time.Sleep(time.Second * 40)
+	}
+	//业务处理完成关闭监听协程
+	cancelFun()
+	err = l.Unlock(context.Background())
+	assert.Nil(t, err)
 }

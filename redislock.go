@@ -10,10 +10,11 @@ import (
 )
 
 type redisLock struct {
-	cli   redis.UniversalClient
-	key   string
-	value interface{}
-	ttl   time.Duration
+	cli    redis.UniversalClient // redis cli
+	key    string                // 上锁 key
+	value  interface{}           //上锁 value
+	ttl    time.Duration         //上锁时间
+	status bool                  //上锁成功标识
 }
 
 var _ DistributedLock = &redisLock{}
@@ -70,7 +71,7 @@ func (l *redisLock) Lock(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-// 自旋锁
+// 自旋锁, 协程阻塞，直到获取锁，或者ctx超时
 func (l *redisLock) SpinLock(ctx context.Context) (success bool, err error) {
 	for {
 		select {
@@ -86,6 +87,26 @@ func (l *redisLock) SpinLock(ctx context.Context) (success bool, err error) {
 		}
 		if success {
 			return
+		}
+	}
+}
+
+// 创建守护协程，自动续期
+func (l *redisLock) WatchLock(ctx context.Context) (err error) {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			//自动续租锁
+			success, err := l.Lock(ctx)
+			if err != nil {
+				continue
+			}
+			if success {
+				//fmt.Printf("SpinLock: 自动续约时间 %d，锁续约结果 %v \r\n", time.Duration(l.ttl)/2, success)
+				time.Sleep(time.Duration(l.ttl) / 2)
+			}
 		}
 	}
 }
